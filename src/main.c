@@ -51,7 +51,6 @@ int main() {
 	 }
 
 	 printf("Waiting for a client to connect...\n");
-	 //client_addr_len = sizeof(client_addr);
 
 		//added int client_fd =
 	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
@@ -59,8 +58,9 @@ int main() {
 	if (client_fd == 0){
 	    printf("Client connected\n");
 		char buffer[64] = { 0 };
-		ssize_t valread = read(new_socket, buffer, 64 - 1);
-		printf("%s\n");
+		client_addr_len = sizeof(client_addr);
+		ssize_t valread = read(client_fd, buffer, 64 - 1);
+		printf("%s\n", buffer);
 	}
 
 	//int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
