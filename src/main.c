@@ -11,7 +11,7 @@ int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
-	
+
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	printf("Logs from your program will appear here!\n");
 
@@ -51,12 +51,21 @@ int main() {
 	 }
 
 	 printf("Waiting for a client to connect...\n");
-	 client_addr_len = sizeof(client_addr);
+	 //client_addr_len = sizeof(client_addr);
 
-	 accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
-	 printf("Client connected\n");
+		//added int client_fd =
+	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 
-	int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+	if (client_fd == 0){
+	    printf("Client connected\n");
+		char buffer[64] = { 0 };
+		ssize_t valread = read(new_socket, buffer, 64 - 1);
+		printf("%s\n");
+	}
+
+	//int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+
 
 	 close(server_fd);
 
