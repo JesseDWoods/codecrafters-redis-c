@@ -55,19 +55,21 @@ int main() {
 		//added int client_fd =
 	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 
-	if (client_fd == 0){
-	    printf("Client connected\n");
+	if (client_fd > 0){
+	    //printf("Client connected\n");
 		char buffer[64] = { 0 };
 		client_addr_len = sizeof(client_addr);
 		ssize_t valread = read(client_fd, buffer, 64 - 1);
-		printf("%s\n", buffer);
+		//printf("%s\n", buffer);
+		char response[] = "+PONG\r\n";
+		send(client_fd, response, strlen(response), 0);
 	}
 
 	//int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
 
-
-	 close(server_fd);
+	close(client_fd);
+	close(server_fd);
 
 	return 0;
 }
