@@ -54,11 +54,17 @@ int main() {
 
 	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 
+	char buffer[1024] = { 0 };
+	ssize_t valread;
+	
 	if(client_fd > 0) {
+
 		do {
-			char buffer[64] = { 0 };
 			//client_addr_len = sizeof(client_addr);
-			ssize_t valread = read(client_fd, buffer, 64 - 1);
+			valread = read(client_fd, buffer, 1024 - 1);
+			if (valread <= 0) {
+				break;
+			}
 			//printf("%s\n", buffer);
 			char response[] = "+PONG\r\n";
 			send(client_fd, response, strlen(response), 0);
