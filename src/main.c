@@ -49,26 +49,27 @@ int main() {
 	 	printf("Listen failed: %s \n", strerror(errno));
 	 	return 1;
 	 }
+	while (listen(server_fd, connection_backlog) == 0) {
+		printf("Waiting for a client to connect...\n");
 
-	 printf("Waiting for a client to connect...\n");
+		int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 
-	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+		char buffer[1024] = { 0 };
+		ssize_t valread;
 
-	char buffer[1024] = { 0 };
-	ssize_t valread;
-	
-	if(client_fd > 0) {
+		if(client_fd > 0) {
 
-		do {
-			//client_addr_len = sizeof(client_addr);
-			valread = read(client_fd, buffer, 1024 - 1);
-			if (valread <= 0) {
-				break;
-			}
-			//printf("%s\n", buffer);
-			char response[] = "+PONG\r\n";
-			send(client_fd, response, strlen(response), 0);
-		}while (valread > 0);
+			do {
+				//client_addr_len = sizeof(client_addr);
+				valread = read(client_fd, buffer, 1024 - 1);
+				if (valread <= 0) {
+					break;
+				}
+				//printf("%s\n", buffer);
+				char response[] = "+PONG\r\n";
+				send(client_fd, response, strlen(response), 0);
+			}while (valread > 0);
+		}
 	}
 
 	//int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
