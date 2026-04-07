@@ -58,7 +58,7 @@ int main() {
 	if (client_fd > 0){
 	    //printf("Client connected\n");
 		char buffer[64] = { 0 };
-		client_addr_len = sizeof(client_addr);
+		//client_addr_len = sizeof(client_addr);
 		ssize_t valread = read(client_fd, buffer, 64 - 1);
 		//printf("%s\n", buffer);
 		char response[] = "+PONG\r\n";
