@@ -98,7 +98,7 @@ int main() {
 									 .sin_addr = { htonl(INADDR_ANY) },
 									};
 
-    if (bind(server_fd, (struct sockaddr*)&client_addr, sizeof(client_addr)) != 0) {
+    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) != 0) {
         printf("Bind failed: %s \n", strerror(errno));
 		return 1;
 	}
