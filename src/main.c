@@ -78,8 +78,8 @@ int main() {
     struct sockaddr_in client_addr;
 
     // Create socket
-    server_fd = socket(AF_NET, SOCK_STREAM, 0);
-    if ((server_fd == -1) {
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if ((server_fd == -1)) {
         printf("Socket creation failed: %s...\n", strerror(errno));
         return 1;
     }
