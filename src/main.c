@@ -6,77 +6,131 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h>
+
+
+
+#define PORT 6379
+#define BACKLOG 5
+#define BUFFER_SIZE 1024
+
+// Structure to hold client connection info
+typedef struct {
+    int sockfd;
+    struct sockaddr_in addr;
+} ClientConnection;
+
+// Thread function to handle a client
+void* handle_client(void *arg) {
+    ClientConnection *client = (ClientConnection*)arg;
+
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+
+    // Echo loop
+    while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytes_read] = '\0';
+        char response[] = "+PONG\r\n";
+        send(client->sockfd, response, strlen(response), 0); // Echo back
+    }
+
+    if (bytes_read == 0) {
+        printf("[Thread %lu] Client disconnected.\n", pthread_self());
+    } else if (bytes_read < 0) {
+        printf("Client connection error.");
+    }
+
+    close(client->sockfd);
+    free(client); // Free heap memory
+    return NULL;
+}
+
+// Accepts a client and allocates on heap
+ClientConnection* accept_client(int server_fd) {
+    ClientConnection *client = malloc(sizeof(ClientConnection));
+    if (!client) {
+        perror("malloc");
+        return NULL;
+    }
+
+    socklen_t addr_len = sizeof(client->addr);
+    client->sockfd = accept(server_fd, (struct sockaddr*)&client->addr, &addr_len);
+    if (client->sockfd < 0) {
+        perror("accept");
+        free(client);
+        return NULL;
+    }
+
+    return client;
+}
 
 int main() {
-	// Disable output buffering
-	setbuf(stdout, NULL);
+    //disable output buffering
+    setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
+
 
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	printf("Logs from your program will appear here!\n");
 
-	// Uncomment the code below to pass the first stage
-	//
-	int server_fd, client_addr_len;
-	struct sockaddr_in client_addr;
+    int server_fd;
+    //int client_addr_len;
+    struct sockaddr_in client_addr;
 
-	 server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	 if (server_fd == -1) {
-	 	printf("Socket creation failed: %s...\n", strerror(errno));
-	 	return 1;
-	 }
+    // Create socket
+    server_fd = socket(AF_NET, SOCK_STREAM, 0);
+    if ((server_fd == -1) {
+        printf("Socket creation failed: %s...\n", strerror(errno));
+        return 1;
+    }
 
-	// Since the tester restarts your program quite often, setting SO_REUSEADDR
+    // Since the tester restarts your program quite often, setting SO_REUSEADDR
 	// ensures that we don't run into 'Address already in use' errors
-	 int reuse = 1;
-	 if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-	 	printf("SO_REUSEADDR failed: %s \n", strerror(errno));
-	 	return 1;
-	 }
-
-	 struct sockaddr_in serv_addr = { .sin_family = AF_INET ,
-	 								 .sin_port = htons(6379),
-	 								 .sin_addr = { htonl(INADDR_ANY) },
-	 								};
-
-	 if (bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) {
-	 	printf("Bind failed: %s \n", strerror(errno));
-	 	return 1;
-	 }
-
-	 int connection_backlog = 5;
-	 if (listen(server_fd, connection_backlog) != 0) {
-	 	printf("Listen failed: %s \n", strerror(errno));
-	 	return 1;
-	 }
-	while (listen(server_fd, connection_backlog) == 0) {
-		printf("Waiting for a client to connect...\n");
-
-		int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
-
-		char buffer[1024] = { 0 };
-		ssize_t valread;
-
-		if(client_fd > 0) {
-
-			do {
-				//client_addr_len = sizeof(client_addr);
-				valread = read(client_fd, buffer, 1024 - 1);
-				if (valread <= 0) {
-					break;
-				}
-				//printf("%s\n", buffer);
-				char response[] = "+PONG\r\n";
-				send(client_fd, response, strlen(response), 0);
-			}while (valread > 0);
-		}
+	int reuse = 1;
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+		printf("SO_REUSEADDR failed: %s \n", strerror(errno));
+		return 1;
 	}
 
-	//int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+    // Bind socket
+    struct sockaddr_in serv_addr = { .sin_family = AF_INET ,
+									 .sin_port = htons(PORT),
+									 .sin_addr = { htonl(INADDR_ANY) },
+									};
 
+    if (bind(server_fd, (struct sockaddr*)&client_addr, sizeof(client_addr)) != 0) {
+        printf("Bind failed: %s \n", strerror(errno));
+		return 1;
+	}
 
-	close(client_fd);
-	close(server_fd);
+    // Listen
+    if (listen(server_fd, BACKLOG) != 0) {
+        printf("listen failed: %s \n", strerror(errno));
+        close(server_fd);
+        return EXIT_FAILURE;
+    }
 
-	return 0;
+    //printf("Server listening on port %d...\n", PORT);
+
+    // Main accept loop
+    while (1) {
+        ClientConnection *client = accept_client(server_fd);
+        if (!client) {
+            continue; // Try next connection
+        }
+
+        pthread_t tid;
+        if (pthread_create(&tid, NULL, handle_client, client) != 0) {
+            perror("pthread_create");
+            close(client->sockfd);
+            free(client);
+            continue;
+        }
+
+        // Detach thread so resources are freed automatically
+        pthread_detach(tid);
+    }
+
+    close(server_fd);
+    return EXIT_SUCCESS;
 }
