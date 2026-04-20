@@ -108,3 +108,4 @@ void free_list(RESP_list *list) {
         free(tmp);
     }
     free(list);
+}
