@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -7,7 +8,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include "RESP_parser.h"
 
 
 #define PORT 6379
@@ -19,7 +20,7 @@ typedef struct {
     int sockfd;
     struct sockaddr_in addr;
 } ClientConnection;
-
+void process_input(ClientConnection*, RESP_list *);
 // Thread function to handle a client
 void* handle_client(void *arg) {
     ClientConnection *client = (ClientConnection*)arg;
@@ -30,8 +31,10 @@ void* handle_client(void *arg) {
     // Echo loop
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
-        char response[] = "+PONG\r\n";
-        send(client->sockfd, response, strlen(response), 0); // Echo back
+        RESP_list *list = parse_list(buffer);
+        process_input(client, list);
+        //char response[] = "+PONG\r\n";
+        //send(client->sockfd, response, strlen(response), 0); // Echo back
     }
 
     if (bytes_read == 0) {
@@ -133,4 +136,38 @@ int main() {
 
     close(server_fd);
     return EXIT_SUCCESS;
+}
+void process_input(ClientConnection * client, RESP_list *list) {
+    while (list != NULL && list->head != NULL) {
+        const RESP_element *cmd = list->head;
+
+        char tmp[cmd->size + 1];
+        for (unsigned int i = 0; i < cmd->size; i++) {
+            tmp[i] = (char)tolower((unsigned char)cmd->element[i]);
+        }
+        tmp[cmd->size] = '\0';
+        printf("%s\n", tmp);
+
+        if (strcmp(tmp, "echo") == 0) {
+            if (cmd->next != NULL) {
+                const RESP_element* arg = cmd->next;
+                printf("$%d\r\n%s\r\n", arg->size, arg->element);
+                char response[50];
+                sprintf(response,"$%d\r\n%s\r\n", arg->size, arg->element);
+                send(client->sockfd, response, strlen(response), 0);
+                dequeue(list); /* remove command */
+                dequeue(list); /* remove argument */
+            } else {
+                dequeue(list);
+            }
+        }else if (strcmp(tmp, "ping") == 0) {
+            char * response = "+PONG\r\n";
+            send(client->sockfd, response, strlen(response), 0);
+            dequeue(list);
+        }
+        else {
+            dequeue(list);
+        }
+    }
+    free_list(list);
 }
