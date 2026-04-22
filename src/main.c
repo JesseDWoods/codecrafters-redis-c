@@ -29,8 +29,8 @@ void* handle_client(void *arg) {
     ClientConnection *client = (ClientConnection*)arg;
 
     char buffer[BUFFER_SIZE];
-    struct hashMap *key_value = NULL;
-
+    struct hashMap *key_value = 0;
+    initializeHashMap(key_value);
 
     ssize_t bytes_read;
 
