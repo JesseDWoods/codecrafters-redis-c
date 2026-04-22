@@ -39,6 +39,7 @@ void* handle_client(void *arg) {
         struct hashMap *key_value;
         initializeHashMap(key_value);
         RESP_list *list = parse_list(buffer);
+        printf("Received: %s\n", buffer);
         process_input(client, list, key_value);
         //char response[] = "+PONG\r\n";
         //send(client->sockfd, response, strlen(response), 0); // Echo back
