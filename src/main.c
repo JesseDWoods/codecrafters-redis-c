@@ -171,10 +171,6 @@ void process_input(ClientConnection * client, RESP_list *list, struct hashMap *k
             }
         }else if (strcmp(tmp, "set") == 0) {
             printf("Here");
-            if (key_value == NULL) {
-                initializeHashMap(key_value);
-                printf("initialized");
-            }
             if (cmd->next != NULL && cmd->next->next != NULL) {
                 insert(key_value, cmd->next->element, cmd->next->next->element);
                 char * response = "+OK\r\n";
