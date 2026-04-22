@@ -22,7 +22,7 @@ typedef struct {
     int sockfd;
     struct sockaddr_in addr;
 } ClientConnection;
-void process_input(ClientConnection*, RESP_list *, struct hashMap *);
+void process_input(ClientConnection*, RESP_list *, const struct hashMap *);
 void send_formatted_output(ClientConnection *, char *);
 // Thread function to handle a client
 void* handle_client(void *arg) {
@@ -146,7 +146,7 @@ int main() {
     close(server_fd);
     return EXIT_SUCCESS;
 }
-void process_input(ClientConnection * client, RESP_list *list, struct hashMap *key_value) {
+void process_input(ClientConnection * client, RESP_list *list, const struct hashMap *key_value) {
     printf("Processing");
 
     while (list != NULL && list->head != NULL) {
