@@ -37,7 +37,7 @@ void* handle_client(void *arg) {
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
         printf("Here\n");
-        struct hashMap *key_value;
+        struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
         initializeHashMap(key_value);
         RESP_list *list = parse_list(buffer);
         printf("Received: %s\n", buffer);
