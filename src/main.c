@@ -36,7 +36,7 @@ void* handle_client(void *arg) {
     // Echo loop
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
-        struct hashMap *key_value = 0;
+        struct hashMap *key_value;
         initializeHashMap(key_value);
         RESP_list *list = parse_list(buffer);
         process_input(client, list, key_value);
