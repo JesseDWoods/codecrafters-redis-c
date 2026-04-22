@@ -29,14 +29,15 @@ void* handle_client(void *arg) {
     ClientConnection *client = (ClientConnection*)arg;
 
     char buffer[BUFFER_SIZE];
-    struct hashMap *key_value = 0;
-    initializeHashMap(key_value);
+
 
     ssize_t bytes_read;
 
     // Echo loop
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
+        struct hashMap *key_value = 0;
+        initializeHashMap(key_value);
         RESP_list *list = parse_list(buffer);
         process_input(client, list, key_value);
         //char response[] = "+PONG\r\n";
