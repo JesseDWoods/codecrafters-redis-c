@@ -192,6 +192,7 @@ void process_input(ClientConnection * client, RESP_list *list, struct hashMap *k
 
         }
         else if (strcmp(tmp, "get") == 0) {
+            printf("Searching for key: %s\n", cmd->next->element);
             send_formatted_output(client, search(key_value, cmd->next->element));
             dequeue(list);
             dequeue(list);
