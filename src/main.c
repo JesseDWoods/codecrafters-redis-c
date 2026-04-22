@@ -40,7 +40,7 @@ void* handle_client(void *arg) {
         struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
         initializeHashMap(key_value);
         RESP_list *list = parse_list(buffer);
-        printf("Received: %s\n", buffer);
+
         process_input(client, list, key_value);
         //char response[] = "+PONG\r\n";
         //send(client->sockfd, response, strlen(response), 0); // Echo back
@@ -176,6 +176,7 @@ void process_input(ClientConnection * client, RESP_list *list, struct hashMap *k
         }else if (strcmp(tmp, "set") == 0) {
             printf("Here");
             if (cmd->next != NULL && cmd->next->next != NULL) {
+                printf("inserting key: %s, value: %s\n", cmd->next->element, cmd->next->next->element);
                 insert(key_value, cmd->next->element, cmd->next->next->element);
                 char * response = "+OK\r\n";
                 send(client->sockfd, response, strlen(response), 0);
