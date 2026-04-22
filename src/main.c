@@ -145,6 +145,7 @@ int main() {
     return EXIT_SUCCESS;
 }
 void process_input(ClientConnection * client, RESP_list *list, struct hashMap *key_value) {
+    printf("Processing input with key_value: %p\n", key_value);
 
     while (list != NULL && list->head != NULL) {
 
