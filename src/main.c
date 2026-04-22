@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
+
+#include "hash_table.h"
 #include "RESP_parser.h"
 
 
@@ -20,19 +22,23 @@ typedef struct {
     int sockfd;
     struct sockaddr_in addr;
 } ClientConnection;
-void process_input(ClientConnection*, RESP_list *);
+void process_input(ClientConnection*, RESP_list *, struct hashMap *);
+void send_formatted_output(ClientConnection *, char *);
 // Thread function to handle a client
 void* handle_client(void *arg) {
     ClientConnection *client = (ClientConnection*)arg;
 
     char buffer[BUFFER_SIZE];
+    struct hashMap *key_value = NULL;
+
+
     ssize_t bytes_read;
 
     // Echo loop
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
         RESP_list *list = parse_list(buffer);
-        process_input(client, list);
+        process_input(client, list, key_value);
         //char response[] = "+PONG\r\n";
         //send(client->sockfd, response, strlen(response), 0); // Echo back
     }
@@ -137,8 +143,10 @@ int main() {
     close(server_fd);
     return EXIT_SUCCESS;
 }
-void process_input(ClientConnection * client, RESP_list *list) {
+void process_input(ClientConnection * client, RESP_list *list, struct hashMap *key_value) {
+
     while (list != NULL && list->head != NULL) {
+
         const RESP_element *cmd = list->head;
 
         char tmp[cmd->size + 1];
@@ -150,17 +158,42 @@ void process_input(ClientConnection * client, RESP_list *list) {
 
         if (strcmp(tmp, "echo") == 0) {
             if (cmd->next != NULL) {
+
                 const RESP_element* arg = cmd->next;
-                printf("$%d\r\n%s\r\n", arg->size, arg->element);
-                char response[50];
-                sprintf(response,"$%d\r\n%s\r\n", arg->size, arg->element);
-                send(client->sockfd, response, strlen(response), 0);
+                send_formatted_output(client, arg->element);
                 dequeue(list); /* remove command */
                 dequeue(list); /* remove argument */
+
             } else {
+
+                dequeue(list);
+
+            }
+        }else if (strcmp(tmp, "set") == 0) {
+            if (key_value == NULL) {
+                initializeHashMap(key_value);
+            }
+            if (cmd->next != NULL && cmd->next->next != NULL) {
+                insert(key_value, cmd->next->element, cmd->next->next->element);
+                char * response = "+OK\r\n";
+                send(client->sockfd, response, strlen(response), 0);
+                dequeue(list);
+                dequeue(list);
                 dequeue(list);
             }
-        }else if (strcmp(tmp, "ping") == 0) {
+            else {
+                char * response = "-ERR wrong number of arguments for 'set' command\r\n";
+                send(client->sockfd, response, strlen(response), 0);
+                dequeue(list);
+            }
+
+        }
+        else if (strcmp(tmp, "get") == 0) {
+            send_formatted_output(client, search(key_value, cmd->next->element));
+            dequeue(list);
+            dequeue(list);
+        }
+        else if (strcmp(tmp, "ping") == 0) {
             char * response = "+PONG\r\n";
             send(client->sockfd, response, strlen(response), 0);
             dequeue(list);
@@ -170,4 +203,26 @@ void process_input(ClientConnection * client, RESP_list *list) {
         }
     }
     free_list(list);
+}
+void send_formatted_output(ClientConnection * client, char * arg) {
+    //const RESP_element* arg = cmd->next;
+    int n = (int)strlen(arg);
+    const int str_len = n;
+    int count = 0;
+    if (n <= 0) {
+        count = 1; // Special case for 0
+    }
+    else {
+        while (n != 0) {
+            n /= 10; // Remove last digit
+            ++count; // Increment digit count
+        }
+    }
+    //printf("+%d\r\n", count);
+    const int size = str_len + 5 + count;
+    char response[size];
+    sprintf(response, "$%d\r\n%s\r\n", str_len, arg);
+
+
+    send(client->sockfd, response, strlen(response), 0);
 }
