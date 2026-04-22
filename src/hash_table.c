@@ -3,6 +3,8 @@
 //
 
 #include "hash_table.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,6 +120,15 @@ char* search(const struct hashMap* mp, const char* key) {
     //auto errorMssg = (char*)malloc(sizeof(char) * 25);
     char* errorMssg = "Oops! No data found.\n";
     return errorMssg;
+}
+void printHashMap(const struct hashMap* mp) {
+    for (int i = 0; i < mp->capacity; i++) {
+        struct node* currNode = mp->arr[i];
+        while (currNode != NULL) {
+            printf("%s\n", currNode->key);
+            currNode = currNode->next;
+        }
+    }
 }
 void freeHashMap(const struct hashMap* mp) {
     for (int i = 0; i < mp->capacity; i++) {

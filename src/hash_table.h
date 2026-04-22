@@ -26,6 +26,7 @@ int hashFunction(const struct hashMap*, const char*);
 void insert(const struct hashMap*, char*, char*);
 void delete (const struct hashMap*, const char*);
 char* search(const struct hashMap*, const char*);
+void printHashMap(const struct hashMap*);
 void freeHashMap(const struct hashMap*);
 
 #endif //HASHTABLE_HASH_TABLE_H
