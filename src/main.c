@@ -33,12 +33,14 @@ void* handle_client(void *arg) {
 
     ssize_t bytes_read;
 
+    struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
+    initializeHashMap(key_value);
+
     // Echo loop
     while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0';
         printf("Here\n");
-        struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
-        initializeHashMap(key_value);
+
         RESP_list *list = parse_list(buffer);
 
         process_input(client, list, key_value);
