@@ -195,11 +195,17 @@ void process_input(ClientConnection * client, RESP_list *list, const struct hash
         }
         else if (strcmp(tmp, "get") == 0) {
             printf("Searching for key: %s\n", cmd->next->element);
-            printf("Key found: %s\n", search(key_value, cmd->next->element));
-            printHashMap(key_value);
-            send_formatted_output(client, search(key_value, cmd->next->element));
-            dequeue(list);
-            dequeue(list);
+            if (strcmp(search(key_value, cmd->next->element),"Oops! No data found.\n") == 0) {
+
+                send(client->sockfd, "$-1\r\n", strlen("$-1\r\n"), 0);
+                dequeue(list);
+                dequeue(list);
+            }
+            else {
+                send_formatted_output(client, search(key_value, cmd->next->element));
+                dequeue(list);
+                dequeue(list);
+            }
         }
         else if (strcmp(tmp, "ping") == 0) {
             char * response = "+PONG\r\n";
