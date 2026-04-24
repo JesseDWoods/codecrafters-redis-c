@@ -22,61 +22,15 @@ typedef struct {
     int sockfd;
     struct sockaddr_in addr;
 } ClientConnection;
+
 void process_input(ClientConnection*, RESP_list *, const struct hashMap *);
 void send_formatted_output(ClientConnection *, char *);
-// Thread function to handle a client
-void* handle_client(void *arg) {
-    ClientConnection *client = (ClientConnection*)arg;
-
-    char buffer[BUFFER_SIZE];
+void* handle_client(void *);
+ClientConnection* accept_client(int);
 
 
-    ssize_t bytes_read;
 
-    struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
-    initializeHashMap(key_value);
 
-    // Echo loop
-    while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
-        buffer[bytes_read] = '\0';
-        printf("Here\n");
-
-        RESP_list *list = parse_list(buffer);
-
-        process_input(client, list, key_value);
-        //char response[] = "+PONG\r\n";
-        //send(client->sockfd, response, strlen(response), 0); // Echo back
-    }
-
-    if (bytes_read == 0) {
-        printf("[Thread %llu] Client disconnected.\n", pthread_self());
-    } else if (bytes_read < 0) {
-        printf("Client connection error.");
-    }
-
-    close(client->sockfd);
-    free(client); // Free heap memory
-    return NULL;
-}
-
-// Accepts a client and allocates on heap
-ClientConnection* accept_client(int server_fd) {
-    ClientConnection *client = malloc(sizeof(ClientConnection));
-    if (!client) {
-        perror("malloc");
-        return NULL;
-    }
-
-    socklen_t addr_len = sizeof(client->addr);
-    client->sockfd = accept(server_fd, (struct sockaddr*)&client->addr, &addr_len);
-    if (client->sockfd < 0) {
-        perror("accept");
-        free(client);
-        return NULL;
-    }
-
-    return client;
-}
 
 int main() {
     //disable output buffering
@@ -147,6 +101,58 @@ int main() {
 
     close(server_fd);
     return EXIT_SUCCESS;
+}
+// Thread function to handle a client
+void* handle_client(void *arg) {
+    ClientConnection *client = (ClientConnection*)arg;
+
+    char buffer[BUFFER_SIZE];
+
+
+    ssize_t bytes_read;
+
+    struct hashMap *key_value = (struct hashMap *) malloc(sizeof(struct hashMap));
+    initializeHashMap(key_value);
+
+    // Echo loop
+    while ((bytes_read = read(client->sockfd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytes_read] = '\0';
+        printf("Here\n");
+
+        RESP_list *list = parse_list(buffer);
+
+        process_input(client, list, key_value);
+        //char response[] = "+PONG\r\n";
+        //send(client->sockfd, response, strlen(response), 0); // Echo back
+    }
+
+    if (bytes_read == 0) {
+        printf("[Thread %llu] Client disconnected.\n", pthread_self());
+    } else if (bytes_read < 0) {
+        printf("Client connection error.");
+    }
+
+    close(client->sockfd);
+    free(client); // Free heap memory
+    return NULL;
+}
+// Accepts a client and allocates on heap
+ClientConnection* accept_client(int server_fd) {
+    ClientConnection *client = malloc(sizeof(ClientConnection));
+    if (!client) {
+        perror("malloc");
+        return NULL;
+    }
+
+    socklen_t addr_len = sizeof(client->addr);
+    client->sockfd = accept(server_fd, (struct sockaddr*)&client->addr, &addr_len);
+    if (client->sockfd < 0) {
+        perror("accept");
+        free(client);
+        return NULL;
+    }
+
+    return client;
 }
 void process_input(ClientConnection * client, RESP_list *list, const struct hashMap *key_value) {
     printf("Processing");
