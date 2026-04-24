@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <string.h>
-#include <errno.h>
+//#include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
 
@@ -49,7 +49,7 @@ void* handle_client(void *arg) {
     }
 
     if (bytes_read == 0) {
-        printf("[Thread %lu] Client disconnected.\n", pthread_self());
+        printf("[Thread %llu] Client disconnected.\n", pthread_self());
     } else if (bytes_read < 0) {
         printf("Client connection error.");
     }
@@ -87,13 +87,13 @@ int main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	printf("Logs from your program will appear here!\n");
 
-    int server_fd;
+    //int server_fd;
     //int client_addr_len;
-    struct sockaddr_in client_addr;
+    //struct sockaddr_in client_addr;
 
     // Create socket
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if ((server_fd == -1)) {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1) {
         printf("Socket creation failed: %s...\n", strerror(errno));
         return 1;
     }
@@ -176,15 +176,16 @@ void process_input(ClientConnection * client, RESP_list *list, const struct hash
 
             }
         }else if (strcmp(tmp, "set") == 0) {
-            printf("Here");
+
             if (cmd->next != NULL && cmd->next->next != NULL) {
-                printf("inserting key: %s, value: %s\n", cmd->next->element, cmd->next->next->element);
+
                 insert(key_value, cmd->next->element, cmd->next->next->element);
                 char * response = "+OK\r\n";
                 send(client->sockfd, response, strlen(response), 0);
                 dequeue(list);
                 dequeue(list);
                 dequeue(list);
+
             }
             else {
                 char * response = "-ERR wrong number of arguments for 'set' command\r\n";
@@ -200,11 +201,14 @@ void process_input(ClientConnection * client, RESP_list *list, const struct hash
                 send(client->sockfd, "$-1\r\n", strlen("$-1\r\n"), 0);
                 dequeue(list);
                 dequeue(list);
+
             }
             else {
+
                 send_formatted_output(client, search(key_value, cmd->next->element));
                 dequeue(list);
                 dequeue(list);
+
             }
         }
         else if (strcmp(tmp, "ping") == 0) {
