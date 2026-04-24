@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <string.h>
-//#include <errno.h>
+#include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
 
